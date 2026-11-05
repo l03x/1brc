@@ -9,8 +9,9 @@ public class MeasurementsProcessor {
     Map<String, Double> maxes = new HashMap<>();
 
     public void process(String line) {
-        String city = line.substring(0, line.indexOf(';'));
-        double temp = Double.parseDouble(line.substring(line.indexOf(';') + 1).replace(',', '.'));
+        int index = line.indexOf(';');
+        String city = line.substring(0, index);
+        double temp = Double.parseDouble(line.substring(index + 1).replace(',', '.'));
 
         // determining the min
         if (!mins.containsKey(city) || mins.containsKey(city) && mins.get(city) > temp) {
