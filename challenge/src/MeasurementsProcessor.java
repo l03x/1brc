@@ -11,15 +11,16 @@ public class MeasurementsProcessor {
     public void process(String line) {
         int index = line.indexOf(';');
         String city = line.substring(0, index);
-        double temp = Double.parseDouble(line.substring(index + 1).replace(',', '.'));
+        String tempString = line.substring(index + 1);
+        double temp = Utils.measurementsTempToDouble(tempString);
 
         // determining the min
-        if (!mins.containsKey(city) || mins.containsKey(city) && mins.get(city) > temp) {
+        if (!mins.containsKey(city) || mins.get(city) > temp) {
             mins.put(city, temp);
         }
 
         // determining the max
-        if (!maxes.containsKey(city) || maxes.containsKey(city) && maxes.get(city) < temp) {
+        if (!maxes.containsKey(city) || maxes.get(city) < temp) {
             maxes.put(city, temp);
         }
 
