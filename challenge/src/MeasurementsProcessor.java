@@ -2,9 +2,9 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 public class MeasurementsProcessor {
     private final BlockingQueue<MyMap> outQueue;
@@ -20,17 +20,29 @@ public class MeasurementsProcessor {
             MyMap data = new MyMap();
 
             try {
-                MappedByteBuffer bb = Utils.ch.map(FileChannel.MapMode.READ_ONLY, start, end - start);
-                byte[] line = new byte[128];
-                int len = 0;
-                while (bb.hasRemaining()) {
-                    byte b = bb.get();
-                    if (b == '\n') {
-                        data.processTemp(new String(line, 0, len, StandardCharsets.UTF_8));
-                        len = 0;
-                    } else {
-                        line[len++] = b;
+                MappedByteBuffer chunk = Utils.ch.map(FileChannel.MapMode.READ_ONLY, start, end - start);
+                byte[] stationName = new byte[128];
+
+                while (chunk.hasRemaining()) {
+                    int nameLength = 0;
+                    int nameHash = 0;
+                    byte current;
+
+                    while ((current = chunk.get()) != ';') {
+                        stationName[nameLength++] = current;
+                        nameHash = 31 * nameHash + current;
                     }
+
+                    boolean negative = false;
+                    int tenths = 0;
+
+                    while ((current = chunk.get()) != '\n') {
+                        if (current == '-') negative = true;
+                        else if (current != '.') tenths = tenths * 10 + (current - '0');
+                    }
+
+                    double temperature = (negative ? -tenths : tenths) / 10.0;
+                    data.processTemp(stationName, nameLength, nameHash, temperature);
                 }
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
