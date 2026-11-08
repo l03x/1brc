@@ -1,0 +1,15 @@
+# Usage:
+#   docker compose run --rm brc                        # native image, data from this folder
+#   DATA_DIR=/path/to/data docker compose run --rm brc  # folder holding measurements.txt
+#   BRC_TARGET=jvm docker compose run --rm brc          # JVM + AOT cache variant
+services:
+  brc:
+    build:
+      context: .
+      target: ${BRC_TARGET:-native}
+    image: 1brc:${BRC_TARGET:-native}
+    cpus: 4
+    mem_limit: 4g
+    memswap_limit: 4g # no swap on top of the 4 GB
+    volumes:
+      - ${DATA_DIR:-.}:/data:ro
